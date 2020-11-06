@@ -19,11 +19,11 @@
 
 package org.ballerinalang.sf;
 
-import org.ballerinalang.jvm.api.BErrorCreator;
-import org.ballerinalang.jvm.api.BStringUtils;
-import org.ballerinalang.jvm.api.values.BError;
-import org.ballerinalang.jvm.api.values.BString;
-import org.ballerinalang.jvm.scheduling.StrandMetadata;
+import io.ballerina.runtime.api.ErrorCreator;
+import io.ballerina.runtime.api.StringUtils;
+import io.ballerina.runtime.api.values.BError;
+import io.ballerina.runtime.api.values.BString;
+import io.ballerina.runtime.api.async.StrandMetadata;
 import org.cometd.bayeux.Channel;
 import org.eclipse.jetty.util.ajax.JSON;
 
@@ -32,16 +32,16 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import org.ballerinalang.jvm.api.BRuntime;
-import org.ballerinalang.jvm.values.MapValue;
-import org.ballerinalang.jvm.values.ObjectValue;
+import io.ballerina.runtime.api.Runtime;
+import io.ballerina.runtime.values.MapValue;
+import io.ballerina.runtime.values.ObjectValue;
 
 import static org.ballerinalang.sf.LoginHelper.login;
 
 public class ListenerUtil {
 
     private static final ArrayList<ObjectValue> services = new ArrayList<>();
-    private static BRuntime runtime;
+    private static Runtime runtime;
     private static EmpConnector connector;
     private static final StrandMetadata ON_EVENT_METADATA = new StrandMetadata(Constants.ORG, Constants.MODULE,
             Constants.VERSION, Constants.ON_EVENT);
@@ -82,7 +82,7 @@ public class ListenerUtil {
         } catch (Exception e) {
             throw sfdcError(e.getMessage());
         }
-        runtime = BRuntime.getCurrentRuntime();
+        runtime = Runtime.getCurrentRuntime();
         @SuppressWarnings("unchecked")
         ArrayList<ObjectValue> services =
                 (ArrayList<ObjectValue>) listener.getNativeData(Constants.CONSUMER_SERVICES);
@@ -114,24 +114,24 @@ public class ListenerUtil {
         return null;
     }
 
-    private static void injectEvent(Map<String, Object> event, ObjectValue serviceObject, BRuntime runtime) {
+    private static void injectEvent(Map<String, Object> event, ObjectValue serviceObject, Runtime runtime) {
         runtime.invokeMethodAsync(serviceObject, Constants.ON_EVENT, null, ON_EVENT_METADATA, null,
                 JSON.toString(event), true);
     }
 
     private static String getTopic(ObjectValue service) {
         MapValue<BString, Object> topicConfig = (MapValue<BString, Object>) service.getType()
-                .getAnnotation(Constants.PACKAGE, Constants.SERVICE_CONFIG);
+                .getAnnotation(StringUtils.fromString(Constants.PACKAGE + ":" + Constants.SERVICE_CONFIG));
         return topicConfig.getStringValue(Constants.TOPIC_NAME).getValue();
     }
 
     private static long getReplayFrom(ObjectValue service) {
         MapValue<BString, Object> topicConfig = (MapValue<BString, Object>) service.getType()
-                .getAnnotation(Constants.PACKAGE, Constants.SERVICE_CONFIG);
+                .getAnnotation(StringUtils.fromString(Constants.PACKAGE + ":" + Constants.SERVICE_CONFIG));
         return topicConfig.getIntValue(Constants.REPLAY_FROM);
     }
 
     private static BError sfdcError(String errorMessage) {
-        return BErrorCreator.createDistinctError(Constants.SFDC_ERROR, Constants.PACKAGE_ID_SFDC, BStringUtils.fromString(errorMessage));
+        return ErrorCreator.createDistinctError(Constants.SFDC_ERROR, Constants.PACKAGE_ID_SFDC, StringUtils.fromString(errorMessage));
     }
 }

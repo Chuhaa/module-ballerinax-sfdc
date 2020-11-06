@@ -85,7 +85,7 @@ public client class QueryClient {
     }
 
     private function getRecord(string path) returns @tainted json|Error {
-        http:Response|error response = self.salesforceClient->get(path);
+        http:Response|http:Payload|error response = self.salesforceClient->get(path);
         return checkAndSetErrors(response);
     }
 }

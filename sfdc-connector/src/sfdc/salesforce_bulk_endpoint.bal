@@ -168,7 +168,7 @@ public client class BulkJob {
     OPERATION operation;
     http:Client httpClient;
 
-    public function init(string jobId, JOBTYPE jobDataType, OPERATION operation, http:Client httpClient) {
+    public isolated function init(string jobId, JOBTYPE jobDataType, OPERATION operation, http:Client httpClient) {
         self.jobId = jobId;
         self.jobDataType = jobDataType;
         self.operation = operation;
@@ -182,7 +182,7 @@ public client class BulkJob {
     public remote function addBatch(json|string|xml|io:ReadableByteChannel content) returns @tainted error|BatchInfo{
         string path = prepareUrl([SERVICES, ASYNC, BULK_API_VERSION, JOB, self.jobId, BATCH]);
         http:Request req = new;
-        // https://github.com/ballerina-platform/ballerina-lang/issues/26446
+        // https://github.com/ballerina-platform/ballerina-lang/issues/26798
         if(self.jobDataType == JSON) {
             if (content is json) {
                 req.setJsonPayload(content);

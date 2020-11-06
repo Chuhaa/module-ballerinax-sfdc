@@ -50,7 +50,7 @@ public class Listener {
         return stopListener();
     }
 
-    public function __immediateStop() returns error? {
+    public isolated function __immediateStop() returns error? {
 
     }
 }

@@ -26,7 +26,7 @@ public class SalesforceBulkAuthHandler {
 
     public auth:OutboundAuthProvider authProvider;
 
-    public function init(auth:OutboundAuthProvider authProvider) {
+    public isolated function init(auth:OutboundAuthProvider authProvider) {
         self.authProvider = authProvider;
     }
 

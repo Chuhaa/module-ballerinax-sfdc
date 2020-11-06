@@ -97,7 +97,7 @@ public client class SObjectClient {
     # + path - Resource path
     # + return - `json` result if successful else Error occured
     public remote function getRecord(string path) returns @tainted json|Error {
-        http:Response|error response = self.salesforceClient->get(path);
+        http:Response|http:Payload|error response = self.salesforceClient->get(path);
         return checkAndSetErrors(response);
     }
 
@@ -358,7 +358,7 @@ public client class SObjectClient {
         return self->updateRecord(PRODUCT, productId, productRecord);
     }
 
-    private function appendQueryParams(string[] fields) returns string {
+    private isolated function appendQueryParams(string[] fields) returns string {
         string appended = "?fields=";
         foreach string item in fields {
             appended = appended.concat(item.trim(), ",");
