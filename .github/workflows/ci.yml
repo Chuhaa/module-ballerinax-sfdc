@@ -13,6 +13,11 @@ jobs:
             uses: actions/setup-java@v1
             with:
               java-version: 11
+          - name: Set up JRE 11
+            uses: actions/setup-java@v1
+            with:
+              java-version: 11
+              java-package: jre
           - run: mvn clean package -pl emp-wrapper
           - name: Ballerina Build
             uses: ballerina-platform/ballerina-action/@swan-lake-connector-release
