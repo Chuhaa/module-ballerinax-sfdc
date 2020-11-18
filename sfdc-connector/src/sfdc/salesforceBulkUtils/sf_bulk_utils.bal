@@ -44,8 +44,14 @@ isolated function checkXmlPayloadAndSetErrors(http:Response|http:Payload|error h
         } else {
             return handleXmlErrorResponse(httpResponse);
         }
-    } else if (httpResponse is http:Payload) {        
-        return Error(UNREACHABLE_STATE);
+
+    } else if (httpResponse is http:Payload) {
+        if (httpResponse is xml) {
+            return httpResponse;
+        } else {
+            log:printError(XML_ACCESSING_ERROR_MSG);
+            return Error(XML_ACCESSING_ERROR_MSG);
+        }
     } else {
         return handleHttpError(httpResponse);
     }
@@ -72,7 +78,12 @@ isolated function checkTextPayloadAndSetErrors(http:Response|http:Payload|error 
             return handleXmlErrorResponse(httpResponse);
         }
     } else if (httpResponse is http:Payload) {
-        return Error(UNREACHABLE_STATE);
+         if (httpResponse is string) {
+            return httpResponse;
+        } else {
+            log:printError(TEXT_ACCESSING_ERROR_MSG);
+            return Error(TEXT_ACCESSING_ERROR_MSG);
+        }        
     } else {
         return handleHttpError(httpResponse);
     }
@@ -97,7 +108,12 @@ isolated function checkJsonPayloadAndSetErrors(http:Response|http:Payload|error 
             return handleJsonErrorResponse(httpResponse);
         }
     } else if (httpResponse is http:Payload) {
-        return Error(UNREACHABLE_STATE);
+        if (httpResponse is json) {
+            return httpResponse;
+        } else {
+            log:printError(JSON_ACCESSING_ERROR_MSG);
+            return Error(JSON_ACCESSING_ERROR_MSG);
+        }
     } else {
         return handleHttpError(httpResponse);
     }
@@ -124,8 +140,14 @@ isolated function getQueryRequest(http:Response|http:Payload|error httpResponse,
                 return handleXmlErrorResponse(httpResponse);
             }
         }
-    } else if (httpResponse is http:Payload) {
-        return Error(UNREACHABLE_STATE);
+     } 
+    else if (httpResponse is http:Payload) {
+        if (httpResponse is string) {
+            return httpResponse;
+        } else {
+            log:printError(TEXT_ACCESSING_ERROR_MSG);
+            return Error(TEXT_ACCESSING_ERROR_MSG);
+        }
     } else {
         return handleHttpError(httpResponse);
     }
