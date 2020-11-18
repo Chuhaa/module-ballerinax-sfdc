@@ -123,28 +123,7 @@ isolated function checkAndSetErrors(http:Response|http:Payload|error httpRespons
             }
         }
     } else if (httpResponse is http:Payload) {     
-        if (httpResponse is json) {
-            json[] errArr = <json[]> httpResponse;
-
-            string errCodes = "";
-            string errMssgs = "";
-            int counter = 1;
-
-            foreach json err in errArr {
-                errCodes = errCodes + err.errorCode.toString();
-                errMssgs = errMssgs + err.message.toString();
-                if (counter != errArr.length()) {
-                    errCodes = errCodes + ", ";
-                    errMssgs = errMssgs + ", ";
-                }
-                counter = counter + 1;
-            }
-
-            return Error(errMssgs, errorCodes = errCodes);
-        } else {
-            log:printError(ERR_EXTRACTING_ERROR_MSG);
-            return Error(ERR_EXTRACTING_ERROR_MSG);
-        }
+        return Error(UNREACHABLE_STATE);
     } else {
         log:printError(HTTP_ERROR_MSG, err = httpResponse);
         return Error(HTTP_ERROR_MSG, httpResponse);
