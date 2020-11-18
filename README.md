@@ -25,11 +25,16 @@ operations using SObjects relationships.
 
 The `ballerinax/sfdc` module support bulk data operations for CSV, JSON, and XML data types.
 
+**Event Listner**
+
+The module includes a Listener that would capture events on PushTopics defined in a Salesforce instance. PushTopic
+ events provide a way to receive notifications for changes to Salesforce data that match an SOQL query.
+
 ## Compatibility
-|                     |    Version     |
-|:-------------------:|:--------------:|
-| Ballerina Language  | 1.2.x          |
-| Salesforce API      | v48.0          |
+|                     |    Version         |
+|:-------------------:|:------------------:|
+| Ballerina Language  | swan-lake-preview5 |
+| Salesforce API      | v48.0              |
 
 ## Sample
 First, import the `ballerinax/sfdc` module into the Ballerina project.
@@ -126,17 +131,17 @@ the SObject and the SObject type.
 ```ballerina
 json account = { Name: "ABC Inc", BillingCity: "New York" };
 
-string|sfdc:ConnectorError createReponse = sobjectClient->createRecord("Account", account);
+string|sfdc:Error createReponse = sobjectClient->createAccount(account);
 ```
 
 The response from `createRecord` is either the string ID of the created record (if the record was created 
-successfully) or `ConnectorError` (if the record creation was unsuccessful).
+successfully) or `Error` (if the record creation was unsuccessful).
 
 ```ballerina
 if (createReponse is string) {
     io:println("Account id: " + createReponse);
 } else {
-    io:println(createReponse.detail()?.message.toString());
+    io:println(createReponse.message());
 }
 ```
 
@@ -149,11 +154,11 @@ remaining results.
 ```ballerina
 string sampleQuery = "SELECT name FROM Account";
 
-sfdc:SoqlResult|sfdc:ConnectorError response = queryClient->getQueryResult(sampleQuery);
+sfdc:SoqlResult|sfdc:Error response = queryClient->getQueryResult(sampleQuery);
 ```
 
 The response from `getQueryResult` is either a SoqlResult record with total size, execution status, resulting records, 
-and URL to get next record set (if query execution was successful) or `ConnectorError` (if the query execution 
+and URL to get next record set (if query execution was successful) or `Error` (if the query execution 
 was unsuccessful).
 
 ```ballerina
@@ -162,7 +167,7 @@ if (response is sfdc:SoqlResult) {
     io:println("Done:  ", response.done.toString());
     io:println("Records: ", response.records.toString());
 } else {
-    io:println("Error: ", response.detail()?.message.toString());
+    io:println("Error: ", response.message());
 }
 ```
 
@@ -191,24 +196,24 @@ Using the created job object, we can add batch to it, get information about the 
     error|sfdc:BatchInfo batch = insertJob->addBatch(contacts); 
 ```   
 
-```
+```ballerina
     //Get batch info.
     error|sfdc:BatchInfo batchInfo = insertJob->getBatchInfo(batch.id
 ``` 
 
-```
+```ballerina
     //Get all batches.
     error|sfdc:BatchInfo[] batchInfoList = insertJob->getAllBatches();
 ```
 
-```
+```ballerina
     //Get the batch request.
     var batchRequest = insertJob->getBatchRequest(batchId);
 ```
 
-```
+```ballerina
     //Get the batch result.
-    error|sdfc48:Result[] batchResult = insertJob->getBatchResult(batchId);
+    error|sdfc:Result[] batchResult = insertJob->getBatchResult(batchId);
 ```
 
 The `getJobInfo` remote function of the bulk client retrieves all details of an existing job.
@@ -223,4 +228,50 @@ committed, they aren’t rolled back.
 
 ```ballerina
     error|sfdc:JobInfo closedJob = bulkClient->closeJob(insertJob);
+```
+
+**Listening to PushTopic Events**
+
+The Listener is configured as below.
+
+```ballerina
+    sfdc:ListenerConfiguration listenerConfig = {
+        username: config:getAsString("SF_USERNAME"),
+        password: config:getAsString("SF_PASSWORD")
+    };
+
+    listener sfdc:Listener eventListener = new (listenerConfig);
+```
+
+In the above configuration, the password should be the concatenation of the user's Salesforce password and his secret
+ key.
+ 
+ Now, a service has to be defined on the `eventListener` like the following.
+ 
+ ```ballerina
+    @sfdc:ServiceConfig {
+        topic:"/topic/QuoteUpdate"
+    }
+    service quoteUpdate on eventListener {
+        resource function onEvent(json quoteUpdate) {  
+            //convert JSON string to JSON      
+            io:StringReader sr = new(quoteUpdate.toJsonString());
+            json|error quote = sr.readJson();
+            if (quote is json) {
+                io:println("Quote Status : ", quote.sobject.Status);
+            }
+        }
+    }
+```
+
+The above service is listening to the PushTopic `QuoteUpdate` defined in the Salesforce like the following.
+
+```
+    PushTopic pushTopic = new PushTopic();
+    pushTopic.Name = 'QuoteUpdate';
+    pushTopic.Query = 'SELECT Id, Name, AccountId, OpportunityId, Status,GrandTotal  FROM Quote';
+    pushTopic.ApiVersion = 48.0;
+    pushTopic.NotifyForOperationUpdate = true;
+    pushTopic.NotifyForFields = 'Referenced';
+    insert pushTopic;
 ```
