@@ -18,4 +18,4 @@ jobs:
             uses: ballerina-platform/ballerina-action/@swan-lake-connector-release
             with:
               args:
-                build -a -c --skip-tests --sourceroot sfdc-connector
+                echo $JAVA_HOME
